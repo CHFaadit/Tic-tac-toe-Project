@@ -45,7 +45,6 @@ print("")
 
 
 # Creating global variables
-
 board = ["-", "-", "-",
          "-", "-", "-",
          "-", "-", "-"]
@@ -64,46 +63,20 @@ def printBoard(board):
 
 # Consuming player input
 def playerInput(board):
-    inp = int(input("Enter a number from 1 to 9: "))
-    if inp >= 1 and inp <= 9 and board[inp-1] == "-":
-        board[inp-1] = currentPlayer
-    else:
-        print("You cannot take what is already taken!")
-
+    if currentPlayer == "X":
+        inp = int(input("Enter a number from 1 to 9: "))
+        if inp >= 1 and inp <= 9 and board[inp-1] == "-":
+            board[inp-1] = currentPlayer
+        else:
+            print("You cannot take what is already taken!")
 
 # Checking for win by achieving three in a row horizontally, vertically, or diagonally
-def checkHorizontal(board):
-    global winner
-    if board[0] == board[1] == board[2] and board[0] != "-":
-        winner = board[0]
-        return True
-    elif board[3] == board[4] == board[5] and board[3] != "-":
-        winner = board[3]
-        return True
-    elif board[6] == board[7] == board[8] and board[6] != "-":
-        winner = board[6]
-        return True
-
-def checkVertical(board):
-    global winner
-    if board[0] == board[3] == board[6] and board[0] != "-":
-        winner = board[0]
-        return True
-    elif board[1] == board[4] == board[7] and board[1] != "-":
-        winner = board[1]
-        return True
-    elif board[2] == board[5] == board[8] and board[2] != "-":
-        winner = board[2]
-        return True
-
-def checkCross(board):
-    global winner
-    if board[0] == board[4] == board[8] and board[0] != "-":
-        winner = board[0]
-        return True
-    elif board[2] == board[4] == board[6] and board[2] != "-":
-        winner = board[2]
-        return True
+def checkWin(board, player):
+    win_conditions = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]
+    for condition in win_conditions:
+        if board[condition[0]] == board[condition[1]] == board[condition[2]] == player:
+            return True
+    return False
 
 # Checking for tie by seeing if nobody won but the board is full, and ending the game if it is a tie
 def checkTie(board):
@@ -113,15 +86,6 @@ def checkTie(board):
         printBoard(board)
         gameRunning = False
 
-# Printing winner if there is one and ending game once winner is found
-def checkWin():
-    global gameRunning
-    if checkHorizontal(board) or checkVertical(board) or checkCross(board):
-        print(f"The winner is {winner}! They are better.")
-        gameRunning = False
-
-
-
 # Switching player
 def switchPlayer():
     global currentPlayer
@@ -130,24 +94,46 @@ def switchPlayer():
     elif currentPlayer == "O":
         currentPlayer = "X"
 
-# Creating computer to play against (plays randomly)
+# Creating computer to play against (plays smarter)
 def computer(board):
     while currentPlayer == "O":
-        position = random.randint(0, 8)
-        if board[position] == "-":
-            board[position] = "O"
-            switchPlayer()
+        # Check if computer can win in the next move
+        for i in range(9):
+            if board[i] == "-":
+                board[i] = "O"
+                if checkWin(board, "O"):
+                    return
+                board[i] = "-"
 
+        # Check if player can win in the next move and block them
+        for i in range(9):
+            if board[i] == "-":
+                board[i] = "X"
+                if checkWin(board, "X"):
+                    board[i] = "O"
+                    return
+                board[i] = "-"
 
+        # If no immediate win or block, then take a random available move
+        while True:
+            position = random.randint(0, 8)
+            if board[position] == "-":
+                board[position] = "O"
+                return
 
 # Running the game
 while gameRunning:
     printBoard(board)
-    playerInput(board)
-    checkWin()
-    checkTie(board)
+    if currentPlayer == "X":
+        playerInput(board)
+        if checkWin(board, "X"):
+            print("The winner is X! They are better.")
+            break
+        checkTie(board)
     if gameRunning:
         switchPlayer()
         computer(board)
-        checkWin()
+        if checkWin(board, "O"):
+            print("The winner is O! They are better.")
+            break
         checkTie(board)
